@@ -1,7 +1,11 @@
 from flask import jsonify
-from . import api_blueprint as api
+from . import api_blueprint as main_api
+from api.routes.scoot import scoot_route  # 修改引用路徑
 
-@api.route('/hello')
+# 註冊 scoot route
+main_api.register_blueprint(scoot_route, url_prefix='/scoot')
+
+@main_api.route('/hello')
 def hello_world():
     """
     簡單的測試 API
@@ -17,7 +21,7 @@ def hello_world():
     """
     return jsonify(message='Hello, World!')
 
-@api.route('/flights')
+@main_api.route('/flights')
 def get_flights():
     """
     取得航班資訊
