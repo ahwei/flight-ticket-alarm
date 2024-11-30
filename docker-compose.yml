@@ -4,7 +4,7 @@ services:
   app:
     build: .
     ports:
-      - "5000:5000"
+      - "3310:3310" # Change the local port to 3310
     volumes:
       - .:/app
-    command: flask run --host=0.0.0.0 --port=5000 --reload
+    command: gunicorn --bind 0.0.0.0:3310 app:app --reload
