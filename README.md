@@ -10,7 +10,7 @@
    docker-compose up --build
    ```
 
-2. The project will run at `http://localhost:5000`.
+2. The project will run at `http://localhost:3310`.
 
 ### Using Vercel
 
