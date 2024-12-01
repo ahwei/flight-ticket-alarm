@@ -17,6 +17,7 @@ handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 
 
 @line_webhook_route.route("/", methods=["POST"])
+@line_webhook_route.route("", methods=["POST"])
 def line_webhook():
     # 確認標頭是否存在
     signature = request.headers["X-Line-Signature"]
