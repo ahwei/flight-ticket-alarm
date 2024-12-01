@@ -126,11 +126,13 @@ def search_flights_simple(amadeus: Client):
         "originLocationCode": "KHH",
         "destinationLocationCode": "NRT",
         "departureDate": "2024-12-13",
-        "returnDate": "2024-12-16",  # 加入回程日期
+        "returnDate": "2024-12-16",
         "adults": 2,
         "travelClass": "ECONOMY",
         "currencyCode": "TWD",
-        "max": 10,  # 限制回傳結果數量
+        "max": 10,
+        "nonStop": True,  # 只搜尋直飛航班
+        # "includedAirlineCodes": "TW",  # 可選: 限定台灣虎航，如果要所有航空公司就移除這行
     }
 
     response = amadeus.shopping.flight_offers_search.get(**search_params)
