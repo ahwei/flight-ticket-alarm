@@ -3,6 +3,11 @@ from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
+import logging
+
+# 設定日誌
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 line_webhook_route = Blueprint("line_webhook", __name__)
 
@@ -22,12 +27,9 @@ def line_webhook():
     body = request.get_data(as_text=True)
 
     try:
-        # 驗證簽名
-        reply_text = "收到您的訊息：" + event.message.text
-
-        print("reply_text", reply_text)
-        # 回覆訊息
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+        # 處理訊息事件
+        handler.handle(body, signature)
+        return jsonify({"status": "success"})
     except InvalidSignatureError:
         abort(400, description="Invalid signature")
 
@@ -39,6 +41,6 @@ def handle_message(event):
     # 處理文字訊息
     reply_text = "收到您的訊息：" + event.message.text
 
-    print("reply_text", reply_text)
+    logger.info(f"reply_text: {reply_text}")
     # 回覆訊息
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
