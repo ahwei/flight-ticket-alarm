@@ -1,7 +1,17 @@
 from flask import Blueprint, jsonify, request, abort, Response
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
-from linebot.models import MessageEvent, TextMessage, TextSendMessage
+from linebot.models import (
+    MessageEvent,
+    TextMessage,
+    TextSendMessage,
+    FlexSendMessage,
+    BubbleContainer,
+    BoxComponent,
+    TextComponent,
+    ButtonComponent,
+    SeparatorComponent,
+)
 import os
 import logging
 from api.util.search import search_flights_simple
@@ -53,6 +63,44 @@ def line_webhook():
     return "OK"
 
 
+def create_flight_flex_message(offers):
+    bubbles = []
+    for offer in offers:
+        bubble = BubbleContainer(
+            body=BoxComponent(
+                layout="vertical",
+                contents=[
+                    TextComponent(
+                        text="Flight Offer", weight="bold", size="xl", margin="md"
+                    ),
+                    SeparatorComponent(margin="xxl"),
+                    BoxComponent(
+                        layout="vertical",
+                        margin="xxl",
+                        spacing="sm",
+                        contents=[
+                            TextComponent(text=f"Price: {offer.get('price', 'N/A')}"),
+                            TextComponent(text=f"From: {offer.get('origin', 'N/A')}"),
+                            TextComponent(
+                                text=f"To: {offer.get('destination', 'N/A')}"
+                            ),
+                            TextComponent(text=f"Date: {offer.get('date', 'N/A')}"),
+                        ],
+                    ),
+                ],
+            )
+        )
+        bubbles.append(bubble)
+
+    return FlexSendMessage(
+        alt_text="Flight Offers",
+        contents={
+            "type": "carousel",
+            "contents": [bubble.dict() for bubble in bubbles],
+        },
+    )
+
+
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     try:
@@ -69,19 +117,14 @@ def handle_message(event):
             if not offers:
                 raise ValueError("No flight offers found")
 
-            response_messages = [TextSendMessage(text="Here are the flight offers:")]
-            response_messages.extend(
-                [TextSendMessage(text=str(offer)) for offer in offers]
-            )
+            flex_message = create_flight_flex_message(offers)
+            line_bot_api.reply_message(event.reply_token, flex_message)
 
-            line_bot_api.reply_message(event.reply_token, response_messages)
         except Exception as e:
             logger.error(f"Flight search error: {str(e)}")
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(
-                    text="Sorry, there was an error searching for flights."
-                ),
+                TextSendMessage(text="抱歉，查詢航班時發生錯誤。"),
             )
 
     except Exception as e:
