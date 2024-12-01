@@ -63,55 +63,93 @@ def line_webhook():
     return "OK"
 
 
+def format_datetime(datetime_str):
+    """格式化日期時間字串"""
+    from datetime import datetime
+
+    dt = datetime.fromisoformat(datetime_str.replace("Z", "+00:00"))
+    return dt.strftime("%Y-%m-%d %H:%M")
+
+
 def create_flight_flex_message(offers):
     bubbles = []
-    # 限制最多顯示10筆資料
-    for offer in offers[:10]:
+    for offer in offers[:10]:  # 限制最多顯示10筆
+        segments_contents = []
+
+        # 處理每個航段
+        for segment in offer["itineraries"][0]["segments"]:
+            segments_contents.extend(
+                [
+                    TextComponent(
+                        text=f"✈️ {segment['carrierCode']}{segment['number']}",
+                        size="md",
+                        weight="bold",
+                    ),
+                    BoxComponent(
+                        layout="vertical",
+                        margin="sm",
+                        spacing="sm",
+                        contents=[
+                            TextComponent(
+                                text=f"從 {segment['departure']['iataCode']} "
+                                f"{format_datetime(segment['departure']['at'])}",
+                                size="sm",
+                            ),
+                            TextComponent(
+                                text=f"到 {segment['arrival']['iataCode']} "
+                                f"{format_datetime(segment['arrival']['at'])}",
+                                size="sm",
+                            ),
+                            TextComponent(
+                                text=f"飛行時間: {segment['duration'].replace('PT', '').replace('H', '小時').replace('M', '分鐘')}",
+                                size="xs",
+                                color="#888888",
+                            ),
+                        ],
+                    ),
+                    SeparatorComponent(margin="md"),
+                ]
+            )
+
+        # 基本艙等資訊
+        cabin = offer["travelerPricings"][0]["fareDetailsBySegment"][0][
+            "cabin"
+        ].capitalize()
+
         bubble = BubbleContainer(
             body=BoxComponent(
                 layout="vertical",
                 contents=[
                     TextComponent(
-                        text="航班資訊", weight="bold", size="xl", margin="md"
+                        text=f"{offer['validatingAirlineCodes'][0]}航空",
+                        weight="bold",
+                        size="xl",
+                        margin="md",
                     ),
-                    SeparatorComponent(margin="xxl"),
+                    TextComponent(
+                        text=f"{cabin}艙 ({offer['numberOfBookableSeats']}座位)",
+                        size="sm",
+                        color="#888888",
+                        margin="sm",
+                    ),
+                    SeparatorComponent(margin="md"),
                     BoxComponent(
                         layout="vertical",
-                        margin="xxl",
+                        margin="md",
                         spacing="sm",
+                        contents=segments_contents,
+                    ),
+                    BoxComponent(
+                        layout="vertical",
+                        margin="md",
                         contents=[
                             TextComponent(
-                                text=f"航空公司: {offer.get('carrier_name', 'N/A')}",
-                                size="md",
-                                wrap=True,
-                            ),
-                            TextComponent(
-                                text=f"航班號碼: {offer.get('flight_number', 'N/A')}",
-                                size="md",
-                            ),
-                            TextComponent(
-                                text=f"出發: {offer.get('departure_time', 'N/A')}",
-                                size="md",
-                            ),
-                            TextComponent(
-                                text=f"抵達: {offer.get('arrival_time', 'N/A')}",
-                                size="md",
-                            ),
-                            SeparatorComponent(margin="md"),
-                            TextComponent(
-                                text=f"起點: {offer.get('origin', 'N/A')}", size="sm"
-                            ),
-                            TextComponent(
-                                text=f"終點: {offer.get('destination', 'N/A')}",
-                                size="sm",
-                            ),
-                            TextComponent(
-                                text=f"價格: {offer.get('price', 'N/A')}",
+                                text=f"總價: TWD {float(offer['price']['grandTotal']):,.0f}",
                                 size="lg",
                                 weight="bold",
                                 color="#1DB446",
-                                margin="md",
                             ),
+                            TextComponent(text="*含稅價", size="xs", color="#888888"),
                         ],
                     ),
                 ],
