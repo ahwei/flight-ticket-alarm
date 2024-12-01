@@ -23,21 +23,22 @@ def line_webhook():
 
     # 獲取請求體
     body = request.get_data(as_text=True)
+    logger.info(f"Received webhook body: {body}")
 
     try:
         # 處理訊息事件
         handler.handle(body, signature)
-        return jsonify(message="OK"), 200
+        return jsonify({"message": "OK"}), 200
     except InvalidSignatureError:
-        logger.info(f"InvalidSignatureError: {InvalidSignatureError}")
-        abort(400, description=InvalidSignatureError)
+        logger.error(f"InvalidSignatureError: {InvalidSignatureError}")
+        abort(400, description="Invalid signature")
 
 
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     # 處理文字訊息
-    reply_text = "收到您的訊息：" + event.message.text
+    message_text = event.message.text
+    logger.info(f"Received message: {message_text}")
 
-    logger.info(f"reply_text: {reply_text}")
-    # 回覆訊息
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
+    # 簡單回覆相同訊息
+    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message_text))
