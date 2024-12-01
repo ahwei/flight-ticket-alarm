@@ -7,6 +7,24 @@ from services.scrapers.scoot_scraper import ScootScraper
 scoot_route = Blueprint('scoot', __name__)
 scoot_scraper = ScootScraper()
 
+
+@scoot_route.route('/hello')
+def hello_world():
+    """
+    簡單的測試 API
+    ---
+    responses:
+      200:
+        description: 成功的回應
+        schema:
+          properties:
+            message:
+              type: string
+              example: "Hello, World!"
+    """
+    return jsonify(message='Hello, World!')
+
+
 @scoot_route.route('/search')
 async def search_flights():
     """

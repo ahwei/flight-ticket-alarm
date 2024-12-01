@@ -1,6 +1,6 @@
 from flask import Flask, send_file, jsonify
 from flask_swagger_ui import get_swaggerui_blueprint
-from api import api_blueprint as api
+from api import api_blueprint 
 
 app = Flask(__name__)
 
@@ -9,7 +9,7 @@ def home():
     return jsonify(message='Hello Flight Alarm')
 
 # 註冊 API blueprint
-app.register_blueprint(api, url_prefix='/api')
+app.register_blueprint(api_blueprint, url_prefix='/api')
 
 # Swagger 設定
 SWAGGER_URL = '/swagger'
