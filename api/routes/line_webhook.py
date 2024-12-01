@@ -17,6 +17,30 @@ import logging
 from api.util.search import search_flights_simple
 from amadeus import Client
 
+# 新增航空公司對照表
+AIRLINE_CODES = {
+    "TW": "台灣虎航",
+    "BR": "長榮航空",
+    "CI": "中華航空",
+    "JL": "日本航空",
+    "NH": "全日空航空",
+    "MM": "樂桃航空",
+    "VJ": "越捷航空",
+    "JX": "星宇航空",
+    "AK": "亞洲航空",
+}
+
+# 新增機型對照表
+AIRCRAFT_CODES = {
+    "738": "波音 737-800",
+    "333": "空巴 A330-300",
+    "359": "空巴 A350-900",
+    "32N": "空巴 A320neo",
+    "321": "空巴 A321",
+    "320": "空巴 A320",
+    "789": "波音 787-9",
+    "788": "波音 787-8",
+}
 
 # 設定日誌
 logging.basicConfig(level=logging.INFO)
@@ -78,12 +102,24 @@ def create_flight_flex_message(offers):
 
         # 處理每個航段
         for segment in offer["itineraries"][0]["segments"]:
+            # 取得航空公司名稱和機型
+            carrier_code = segment["carrierCode"]
+            aircraft_code = segment["aircraft"]["code"]
+            airline_name = AIRLINE_CODES.get(carrier_code, carrier_code)
+            aircraft_type = AIRCRAFT_CODES.get(aircraft_code, aircraft_code)
+
             segments_contents.extend(
                 [
                     TextComponent(
-                        text=f"✈️ {segment['carrierCode']}{segment['number']}",
+                        text=f"✈️ {airline_name} {segment['number']}",
                         size="md",
                         weight="bold",
+                    ),
+                    TextComponent(
+                        text=f"機型: {aircraft_type}",
+                        size="xs",
+                        color="#888888",
+                        margin="sm",
                     ),
                     BoxComponent(
                         layout="vertical",
@@ -111,21 +147,20 @@ def create_flight_flex_message(offers):
                 ]
             )
 
-        # 基本艙等資訊
         cabin = offer["travelerPricings"][0]["fareDetailsBySegment"][0][
             "cabin"
         ].capitalize()
+        airline_code = offer["validatingAirlineCodes"][0]
+        airline_name = AIRLINE_CODES.get(airline_code, airline_code)
 
         bubble = BubbleContainer(
             body=BoxComponent(
                 layout="vertical",
                 contents=[
                     TextComponent(
-                        text=f"{offer['validatingAirlineCodes'][0]}航空",
-                        weight="bold",
-                        size="xl",
-                        margin="md",
+                        text=f"{airline_name}", weight="bold", size="xl", margin="md"
                     ),
+                    # ...rest of the bubble content remains the same...
                     TextComponent(
                         text=f"{cabin}艙 ({offer['numberOfBookableSeats']}座位)",
                         size="sm",
