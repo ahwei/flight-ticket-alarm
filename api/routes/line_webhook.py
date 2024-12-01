@@ -19,7 +19,10 @@ handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 @line_webhook_route.route("/", methods=["POST"])
 def line_webhook():
     # 確認標頭是否存在
-    signature = request.headers["X-Line-Signature"]
+    signature = request.headers.get("X-Line-Signature")
+    if not signature:
+        logger.error("Missing X-Line-Signature header")
+        return jsonify({"message": "Missing X-Line-Signature header"}), 400
 
     # 獲取請求體
     body = request.get_data(as_text=True)
@@ -28,10 +31,10 @@ def line_webhook():
     try:
         # 處理訊息事件
         handler.handle(body, signature)
-        return jsonify({"message": "OK"}), 200
     except InvalidSignatureError as e:
         logger.error(f"InvalidSignatureError: {str(e)}")
-        abort(400, description="Invalid signature")
+        abort(400)
+    return "OK"
 
 
 @handler.add(MessageEvent, message=TextMessage)
@@ -42,3 +45,4 @@ def handle_message(event):
 
     # 簡單回覆相同訊息
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message_text))
+    return
