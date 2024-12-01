@@ -96,7 +96,7 @@ def create_flight_flex_message(offers):
         alt_text="Flight Offers",
         contents={
             "type": "carousel",
-            "contents": [bubble.dict() for bubble in bubbles],
+            "contents": [bubble.as_json_dict() for bubble in bubbles],
         },
     )
 
