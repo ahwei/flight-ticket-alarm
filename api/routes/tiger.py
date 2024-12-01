@@ -3,10 +3,12 @@ from datetime import datetime
 from services.scrapers.tiger_scraper import TigerScraper
 from ..models.flight import Flight
 
-tiger_route = Blueprint('tiger', __name__)
+
+tiger_route = Blueprint("tiger", __name__)
 tiger_scraper = TigerScraper()
 
-@tiger_route.route('/search')
+
+@tiger_route.route("/search")
 async def search_flights():
     """
     搜尋虎航航班
@@ -58,10 +60,10 @@ async def search_flights():
                   available_seats:
                     type: integer
     """
-    from_airport = request.args.get('from')
-    to_airport = request.args.get('to')
-    date = datetime.strptime(request.args.get('date'), '%Y-%m-%d')
-    
+    from_airport = request.args.get("from")
+    to_airport = request.args.get("to")
+    date = datetime.strptime(request.args.get("date"), "%Y-%m-%d")
+
     try:
         flights = await tiger_scraper.search_flights(from_airport, to_airport, date)
         return jsonify({"flights": [vars(f) for f in flights]})

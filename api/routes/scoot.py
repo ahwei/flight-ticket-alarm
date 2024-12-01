@@ -4,11 +4,11 @@ from typing import List, Optional
 from api.models.flight import Flight  # 修改引用路徑
 from services.scrapers.scoot_scraper import ScootScraper
 
-scoot_route = Blueprint('scoot', __name__)
+scoot_route = Blueprint("scoot", __name__)
 scoot_scraper = ScootScraper()
 
 
-@scoot_route.route('/hello')
+@scoot_route.route("/hello")
 def hello_world():
     """
     簡單的測試 API
@@ -22,10 +22,10 @@ def hello_world():
               type: string
               example: "Hello, World!"
     """
-    return jsonify(message='Hello, World!')
+    return jsonify(message="Hello, World!")
 
 
-@scoot_route.route('/search')
+@scoot_route.route("/search")
 async def search_flights():
     """
     搜尋酷航航班
@@ -77,10 +77,10 @@ async def search_flights():
                   available_seats:
                     type: integer
     """
-    from_airport = request.args.get('from')
-    to_airport = request.args.get('to')
-    date = datetime.strptime(request.args.get('date'), '%Y-%m-%d')
-    
+    from_airport = request.args.get("from")
+    to_airport = request.args.get("to")
+    date = datetime.strptime(request.args.get("date"), "%Y-%m-%d")
+
     try:
         flights = await scoot_scraper.search_flights(from_airport, to_airport, date)
         return jsonify({"flights": [vars(f) for f in flights]})

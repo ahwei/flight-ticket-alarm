@@ -10,6 +10,9 @@ COPY requirements.txt .
 # Install the dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Format Python code using Black
+RUN black .
+
 # Copy the rest of the application code into the container
 COPY . .
 
