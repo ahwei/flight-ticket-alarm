@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request, abort
+from flask import Blueprint, jsonify, request, abort, Response
 from linebot import LineBotApi, WebhookHandler
 from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
@@ -20,8 +20,6 @@ handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 def line_webhook():
     # 確認標頭是否存在
     signature = request.headers.get("X-Line-Signature")
-    if not signature:
-        abort(400, description="Missing X-Line-Signature header")
 
     # 獲取請求體
     body = request.get_data(as_text=True)
@@ -29,11 +27,10 @@ def line_webhook():
     try:
         # 處理訊息事件
         handler.handle(body, signature)
-        return jsonify({"status": "success"})
+        return jsonify(message="OK"), 200
     except InvalidSignatureError:
-        abort(400, description="Invalid signature")
-
-    return "OK"
+        logger.info(f"InvalidSignatureError: {InvalidSignatureError}")
+        abort(400, description=InvalidSignatureError)
 
 
 @handler.add(MessageEvent, message=TextMessage)
