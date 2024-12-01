@@ -123,12 +123,14 @@ def search_flights(data, amadeus: Client):
 
 def search_flights_simple(amadeus: Client):
     search_params = {
-        "originLocationCode": "TPE",
+        "originLocationCode": "KHH",
         "destinationLocationCode": "NRT",
-        "departureDate": datetime.now().strftime("%Y-%m-%d"),
-        "adults": 1,
+        "departureDate": "2024-12-13",
+        "returnDate": "2024-12-16",  # 加入回程日期
+        "adults": 2,
         "travelClass": "ECONOMY",
         "currencyCode": "TWD",
+        "max": 10,  # 限制回傳結果數量
     }
 
     response = amadeus.shopping.flight_offers_search.get(**search_params)
