@@ -7,6 +7,7 @@ import logging
 from api.util.search import search_flights_simple
 from amadeus import Client
 
+
 # 設定日誌
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -14,23 +15,8 @@ logger = logging.getLogger(__name__)
 line_webhook_route = Blueprint("line_webhook", __name__)
 
 
-def check_environment_variables():
-    required_vars = [
-        "LINE_CHANNEL_ACCESS_TOKEN",
-        "LINE_CHANNEL_SECRET",
-        "AMADEUS_CLIENT_ID",
-        "AMADEUS_CLIENT_SECRET",
-    ]
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
-    if missing_vars:
-        raise EnvironmentError(
-            f"Missing required environment variables: {', '.join(missing_vars)}"
-        )
-
-
 # 初始化時檢查環境變數
 try:
-    check_environment_variables()
     line_bot_api = LineBotApi(os.getenv("LINE_CHANNEL_ACCESS_TOKEN"))
     handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 except Exception as e:
@@ -75,9 +61,10 @@ def handle_message(event):
 
         try:
             amadeus = Client(
-                client_id=os.getenv("AMADEUS_CLIENT_ID"),
-                client_secret=os.getenv("AMADEUS_CLIENT_SECRET"),
+                client_id=os.getenv("AMADEUS_API_KEY"),
+                client_secret=os.getenv("AMADEUS_API_SECRET"),
             )
+
             offers = search_flights_simple(amadeus)
             if not offers:
                 raise ValueError("No flight offers found")

@@ -3,11 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from amadeus import Client, ResponseError
 import os
-from dotenv import load_dotenv
 from api.util.search import search_flights
-
-
-load_dotenv()
 
 
 class FlightData:

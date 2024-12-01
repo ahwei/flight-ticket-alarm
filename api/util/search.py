@@ -1,6 +1,9 @@
 from datetime import datetime
 from typing import List, Optional
 from amadeus import Client, ResponseError
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 class FlightData:
