@@ -23,7 +23,11 @@ def line_webhook():
 
     try:
         # 驗證簽名
-        handler.handle(body, signature)
+        reply_text = "收到您的訊息：" + event.message.text
+
+        print("reply_text", reply_text)
+        # 回覆訊息
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
     except InvalidSignatureError:
         abort(400, description="Invalid signature")
 
@@ -35,5 +39,6 @@ def handle_message(event):
     # 處理文字訊息
     reply_text = "收到您的訊息：" + event.message.text
 
+    print("reply_text", reply_text)
     # 回覆訊息
     line_bot_api.reply_message(event.reply_token, TextSendMessage(text=reply_text))
