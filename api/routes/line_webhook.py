@@ -104,10 +104,14 @@ def create_flight_flex_message(offers):
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     try:
+        # 檢查是否為重新傳遞的訊息
+        if hasattr(event, "delivery_context") and event.delivery_context.is_redelivery:
+            logger.warning("This is a redelivered message, skipping reply")
+            return
+
         message_text = event.message.text.strip().lower()
         logger.info(f"Processing message: {message_text}")
 
-        # 只有當訊息是 "search flights" 時才進行搜尋
         if message_text == "search flights":
             try:
                 amadeus = Client(
@@ -128,24 +132,29 @@ def handle_message(event):
 
             except Exception as e:
                 logger.error(f"Flight search error: {str(e)}")
-                line_bot_api.reply_message(
-                    event.reply_token,
-                    TextSendMessage(text="抱歉，查詢航班時發生錯誤。請稍後再試。"),
-                )
+                if not event.delivery_context.is_redelivery:
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(
+                            text=f"抱歉，查詢航班時發生{str(e)}。請稍後再試。"
+                        ),
+                    )
         else:
             # 如果不是搜尋航班的指令，回覆使用說明
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="請輸入 'search flights' 來搜尋航班。"),
-            )
+            if not event.delivery_context.is_redelivery:
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="請輸入 'search flights' 來搜尋航班。"),
+                )
 
     except Exception as e:
         logger.error(f"Message handling error: {str(e)}")
-        try:
-            line_bot_api.reply_message(
-                event.reply_token,
-                TextSendMessage(text="抱歉，處理您的請求時發生錯誤。請稍後再試。"),
-            )
-        except Exception as reply_error:
-            logger.error(f"Error sending error message: {str(reply_error)}")
-            raise
+        # 只在非重新傳遞的情況下嘗試發送錯誤訊息
+        if not event.delivery_context.is_redelivery:
+            try:
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="抱歉，處理您的請求時發生錯誤。請稍後再試。"),
+                )
+            except Exception as reply_error:
+                logger.error(f"Error sending error message: {str(reply_error)}")
