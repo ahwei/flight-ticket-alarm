@@ -13,8 +13,10 @@ handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 
 @line_webhook_route.route("/", methods=["POST"])
 def line_webhook():
-    # 獲取 X-Line-Signature 頭部
-    signature = request.headers["X-Line-Signature"]
+    # 確認標頭是否存在
+    signature = request.headers.get("X-Line-Signature")
+    if not signature:
+        abort(400, description="Missing X-Line-Signature header")
 
     # 獲取請求體
     body = request.get_data(as_text=True)
@@ -23,7 +25,7 @@ def line_webhook():
         # 驗證簽名
         handler.handle(body, signature)
     except InvalidSignatureError:
-        abort(400)
+        abort(400, description="Invalid signature")
 
     return "OK"
 
