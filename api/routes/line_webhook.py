@@ -104,27 +104,39 @@ def create_flight_flex_message(offers):
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     try:
-        message_text = event.message.text
+        message_text = event.message.text.strip().lower()
         logger.info(f"Processing message: {message_text}")
 
-        try:
-            amadeus = Client(
-                client_id=os.getenv("AMADEUS_API_KEY"),
-                client_secret=os.getenv("AMADEUS_API_SECRET"),
-            )
+        # 只有當訊息是 "search flights" 時才進行搜尋
+        if message_text == "search flights":
+            try:
+                amadeus = Client(
+                    client_id=os.getenv("AMADEUS_API_KEY"),
+                    client_secret=os.getenv("AMADEUS_API_SECRET"),
+                )
 
-            offers = search_flights_simple(amadeus)
-            if not offers:
-                raise ValueError("No flight offers found")
+                offers = search_flights_simple(amadeus)
+                if not offers:
+                    line_bot_api.reply_message(
+                        event.reply_token,
+                        TextSendMessage(text="目前沒有找到符合的航班。"),
+                    )
+                    return
 
-            flex_message = create_flight_flex_message(offers)
-            line_bot_api.reply_message(event.reply_token, flex_message)
+                flex_message = create_flight_flex_message(offers)
+                line_bot_api.reply_message(event.reply_token, flex_message)
 
-        except Exception as e:
-            logger.error(f"Flight search error: {str(e)}")
+            except Exception as e:
+                logger.error(f"Flight search error: {str(e)}")
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(text="抱歉，查詢航班時發生錯誤。請稍後再試。"),
+                )
+        else:
+            # 如果不是搜尋航班的指令，回覆使用說明
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="抱歉，查詢航班時發生錯誤。"),
+                TextSendMessage(text="請輸入 'search flights' 來搜尋航班。"),
             )
 
     except Exception as e:
@@ -132,7 +144,8 @@ def handle_message(event):
         try:
             line_bot_api.reply_message(
                 event.reply_token,
-                TextSendMessage(text="抱歉，處理您的請求時發生錯誤。"),
+                TextSendMessage(text="抱歉，處理您的請求時發生錯誤。請稍後再試。"),
             )
         except Exception as reply_error:
             logger.error(f"Error sending error message: {str(reply_error)}")
+            raise
