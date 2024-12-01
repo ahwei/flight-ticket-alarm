@@ -19,7 +19,7 @@ handler = WebhookHandler(os.getenv("LINE_CHANNEL_SECRET"))
 @line_webhook_route.route("/", methods=["POST"])
 def line_webhook():
     # 確認標頭是否存在
-    signature = request.headers.get("X-Line-Signature")
+    signature = request.headers["X-Line-Signature"]
     if not signature:
         logger.error("Missing X-Line-Signature header")
         return jsonify({"message": "Missing X-Line-Signature header"}), 400
