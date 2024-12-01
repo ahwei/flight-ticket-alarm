@@ -29,8 +29,8 @@ def line_webhook():
         # 處理訊息事件
         handler.handle(body, signature)
         return jsonify({"message": "OK"}), 200
-    except InvalidSignatureError:
-        logger.error(f"InvalidSignatureError: {InvalidSignatureError}")
+    except InvalidSignatureError as e:
+        logger.error(f"InvalidSignatureError: {str(e)}")
         abort(400, description="Invalid signature")
 
 
