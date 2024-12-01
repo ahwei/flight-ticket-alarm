@@ -208,5 +208,5 @@ def search_flights_simple(amadeus: Client):
 
     response = amadeus.shopping.flight_offers_search.get(**search_params)
     offers = response.data
-    formatted_offers = [format_offer(offer) for offer in offers]
-    return formatted_offers
+
+    return offers
