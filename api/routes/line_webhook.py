@@ -95,23 +95,44 @@ def format_datetime(datetime_str):
     return dt.strftime("%Y-%m-%d %H:%M")
 
 
+def get_airline_info(segment):
+    """安全地取得航空公司和機型資訊"""
+    try:
+        carrier_code = segment.get("carrierCode", "")
+        aircraft_info = segment.get("aircraft", {})
+        aircraft_code = (
+            aircraft_info.get("code", "") if isinstance(aircraft_info, dict) else ""
+        )
+
+        # 確保代碼不為空
+        if not carrier_code:
+            carrier_code = "未知航空"
+        if not aircraft_code:
+            aircraft_code = "未知機型"
+
+        airline_name = AIRLINE_CODES.get(carrier_code, f"其他航空({carrier_code})")
+        aircraft_type = AIRCRAFT_CODES.get(aircraft_code, f"其他機型({aircraft_code})")
+
+        return airline_name, aircraft_type, carrier_code
+    except Exception as e:
+        logger.error(f"Error processing airline info: {str(e)}")
+        return "未知航空", "未知機型", "N/A"
+
+
 def create_flight_flex_message(offers):
     bubbles = []
     for offer in offers[:10]:  # 限制最多顯示10筆
         segments_contents = []
 
         # 處理每個航段
-        for segment in offer["itineraries"][0]["segments"]:
-            # 取得航空公司名稱和機型
-            carrier_code = segment["carrierCode"]
-            aircraft_code = segment["aircraft"]["code"]
-            airline_name = AIRLINE_CODES.get(carrier_code, carrier_code)
-            aircraft_type = AIRCRAFT_CODES.get(aircraft_code, aircraft_code)
+        for segment in offer.get("itineraries", [{}])[0].get("segments", []):
+            # 使用新的安全取得航空公司和機型資訊的函數
+            airline_name, aircraft_type, flight_number = get_airline_info(segment)
 
             segments_contents.extend(
                 [
                     TextComponent(
-                        text=f"✈️ {airline_name} {segment['number']}",
+                        text=f"✈️ {airline_name} {segment.get('number', 'N/A')}",
                         size="md",
                         weight="bold",
                     ),
