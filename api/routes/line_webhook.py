@@ -65,13 +65,14 @@ def line_webhook():
 
 def create_flight_flex_message(offers):
     bubbles = []
-    for offer in offers:
+    # 限制最多顯示10筆資料
+    for offer in offers[:10]:
         bubble = BubbleContainer(
             body=BoxComponent(
                 layout="vertical",
                 contents=[
                     TextComponent(
-                        text="Flight Offer", weight="bold", size="xl", margin="md"
+                        text="航班資訊", weight="bold", size="xl", margin="md"
                     ),
                     SeparatorComponent(margin="xxl"),
                     BoxComponent(
@@ -79,12 +80,38 @@ def create_flight_flex_message(offers):
                         margin="xxl",
                         spacing="sm",
                         contents=[
-                            TextComponent(text=f"Price: {offer.get('price', 'N/A')}"),
-                            TextComponent(text=f"From: {offer.get('origin', 'N/A')}"),
                             TextComponent(
-                                text=f"To: {offer.get('destination', 'N/A')}"
+                                text=f"航空公司: {offer.get('carrier_name', 'N/A')}",
+                                size="md",
+                                wrap=True,
                             ),
-                            TextComponent(text=f"Date: {offer.get('date', 'N/A')}"),
+                            TextComponent(
+                                text=f"航班號碼: {offer.get('flight_number', 'N/A')}",
+                                size="md",
+                            ),
+                            TextComponent(
+                                text=f"出發: {offer.get('departure_time', 'N/A')}",
+                                size="md",
+                            ),
+                            TextComponent(
+                                text=f"抵達: {offer.get('arrival_time', 'N/A')}",
+                                size="md",
+                            ),
+                            SeparatorComponent(margin="md"),
+                            TextComponent(
+                                text=f"起點: {offer.get('origin', 'N/A')}", size="sm"
+                            ),
+                            TextComponent(
+                                text=f"終點: {offer.get('destination', 'N/A')}",
+                                size="sm",
+                            ),
+                            TextComponent(
+                                text=f"價格: {offer.get('price', 'N/A')}",
+                                size="lg",
+                                weight="bold",
+                                color="#1DB446",
+                                margin="md",
+                            ),
                         ],
                     ),
                 ],
@@ -93,7 +120,7 @@ def create_flight_flex_message(offers):
         bubbles.append(bubble)
 
     return FlexSendMessage(
-        alt_text="Flight Offers",
+        alt_text="航班資訊",
         contents={
             "type": "carousel",
             "contents": [bubble.as_json_dict() for bubble in bubbles],
