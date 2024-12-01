@@ -122,20 +122,32 @@ def search_flights(data, amadeus: Client):
 
 
 def search_flights_simple(amadeus: Client):
-    search_params = {
-        "originLocationCode": "KHH",
-        "destinationLocationCode": "NRT",
-        "departureDate": "2024-12-13",
-        "returnDate": "2024-12-16",
-        "adults": 2,
-        "travelClass": "ECONOMY",
-        "currencyCode": "TWD",
-        "max": 10,
-        "nonStop": True,  # 只搜尋直飛航班
-        # "includedAirlineCodes": "TW",  # 可選: 限定台灣虎航，如果要所有航空公司就移除這行
-    }
+    try:
+        search_params = {
+            "originLocationCode": "KHH",
+            "destinationLocationCode": "NRT",
+            "departureDate": "2024-12-13",
+            "returnDate": "2024-12-16",
+            "adults": 2,
+            "travelClass": "ECONOMY",
+            "currencyCode": "TWD",
+            "max": 10,
+            "nonStop": True,
+        }
 
-    response = amadeus.shopping.flight_offers_search.get(**search_params)
-    offers = response.data
+        logger.info(f"Searching flights with params: {search_params}")
+        response = amadeus.shopping.flight_offers_search.get(**search_params)
 
-    return offers
+        if not response.data:
+            logger.warning("No flight offers found")
+            return []
+
+        logger.info(f"Found {len(response.data)} flight offers")
+        return response.data
+
+    except ResponseError as error:
+        logger.error(f"Amadeus API error: {error.code} - {error.description}")
+        raise ValueError(f"航班搜尋錯誤: {error.description}")
+    except Exception as e:
+        logger.error(f"Unexpected error in flight search: {str(e)}")
+        raise ValueError(f"航班搜尋時發生未預期的錯誤:{str(e)}")

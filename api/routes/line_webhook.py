@@ -225,7 +225,6 @@ def create_flight_flex_message(offers):
 @handler.add(MessageEvent, message=TextMessage)
 def handle_message(event):
     try:
-        # 檢查是否為重新傳遞的訊息
         if hasattr(event, "delivery_context") and event.delivery_context.is_redelivery:
             logger.warning("This is a redelivered message, skipping reply")
             return
@@ -240,26 +239,33 @@ def handle_message(event):
                     client_secret=os.getenv("AMADEUS_API_SECRET"),
                 )
 
+                if not amadeus.client_id or not amadeus.client_secret:
+                    raise ValueError("Amadeus API 認證資訊未設定")
+
                 offers = search_flights_simple(amadeus)
                 if not offers:
                     line_bot_api.reply_message(
                         event.reply_token,
-                        TextSendMessage(text="目前沒有找到符合的航班。"),
+                        TextSendMessage(text="目���沒有找到符合的航班，請稍後再試。"),
                     )
                     return
 
                 flex_message = create_flight_flex_message(offers)
                 line_bot_api.reply_message(event.reply_token, flex_message)
 
+            except ValueError as ve:
+                logger.error(f"Flight search value error: {str(ve)}")
+                line_bot_api.reply_message(
+                    event.reply_token, TextSendMessage(text=str(ve))
+                )
             except Exception as e:
-                logger.error(f"Flight search error: {str(e)}")
-                if not event.delivery_context.is_redelivery:
-                    line_bot_api.reply_message(
-                        event.reply_token,
-                        TextSendMessage(
-                            text=f"抱歉，查詢航班時發生{str(e)}。請稍後再試。"
-                        ),
-                    )
+                logger.error(f"Flight search error: {str(e)}", exc_info=True)
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(
+                        text="抱歉，查詢航班時發生錯誤。請確認航班資訊是否正確。"
+                    ),
+                )
         else:
             # 如果不是搜尋航班的指令，回覆使用說明
             if not event.delivery_context.is_redelivery:
