@@ -116,3 +116,94 @@ def search_flights(data, amadeus: Client):
     }
 
     return offers, search_criteria
+
+
+def format_offer(offer):
+    return {
+        "type": "bubble",
+        "size": "mega",
+        "header": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {
+                            "type": "text",
+                            "text": "FROM",
+                            "color": "#ffffff66",
+                            "size": "sm",
+                        },
+                        {
+                            "type": "text",
+                            "text": offer["itineraries"][0]["segments"][0]["departure"][
+                                "iataCode"
+                            ],
+                            "color": "#ffffff",
+                            "size": "xl",
+                            "flex": 4,
+                            "weight": "bold",
+                        },
+                    ],
+                },
+                {
+                    "type": "box",
+                    "layout": "vertical",
+                    "contents": [
+                        {
+                            "type": "text",
+                            "text": "TO",
+                            "color": "#ffffff66",
+                            "size": "sm",
+                        },
+                        {
+                            "type": "text",
+                            "text": offer["itineraries"][0]["segments"][-1]["arrival"][
+                                "iataCode"
+                            ],
+                            "color": "#ffffff",
+                            "size": "xl",
+                            "flex": 4,
+                            "weight": "bold",
+                        },
+                    ],
+                },
+            ],
+            "paddingAll": "20px",
+            "backgroundColor": "#0367D3",
+            "spacing": "md",
+            "height": "154px",
+            "paddingTop": "22px",
+        },
+        "body": {
+            "type": "box",
+            "layout": "vertical",
+            "contents": [
+                {
+                    "type": "text",
+                    "text": f"Total: {offer['itineraries'][0]['duration']}",
+                    "color": "#b7b7b7",
+                    "size": "xs",
+                },
+                # ...additional formatting for segments...
+            ],
+        },
+    }
+
+
+def search_flights_simple(amadeus: Client):
+    search_params = {
+        "originLocationCode": "TPE",
+        "destinationLocationCode": "NRT",
+        "departureDate": datetime.now().strftime("%Y-%m-%d"),
+        "adults": 1,
+        "travelClass": "ECONOMY",
+        "currencyCode": "TWD",
+    }
+
+    response = amadeus.shopping.flight_offers_search.get(**search_params)
+    offers = response.data
+    formatted_offers = [format_offer(offer) for offer in offers]
+    return formatted_offers

@@ -4,6 +4,8 @@ from linebot.exceptions import InvalidSignatureError
 from linebot.models import MessageEvent, TextMessage, TextSendMessage
 import os
 import logging
+from api.util.search import search_flights_simple
+from amadeus import Client
 
 # 設定日誌
 logging.basicConfig(level=logging.INFO)
@@ -44,6 +46,19 @@ def handle_message(event):
     message_text = event.message.text
     logger.info(f"Received message: {message_text}")
 
-    # 簡單回覆相同訊息
-    line_bot_api.reply_message(event.reply_token, TextSendMessage(text=message_text))
+    if message_text.lower() == "search flights":
+        amadeus = Client(
+            client_id=os.getenv("AMADEUS_CLIENT_ID"),
+            client_secret=os.getenv("AMADEUS_CLIENT_SECRET"),
+        )
+        offers = search_flights_simple(amadeus)
+        line_bot_api.reply_message(
+            event.reply_token,
+            [TextSendMessage(text="Here are the flight offers:")]
+            + [TextSendMessage(text=str(offer)) for offer in offers],
+        )
+    else:
+        line_bot_api.reply_message(
+            event.reply_token, TextSendMessage(text=message_text)
+        )
     return
