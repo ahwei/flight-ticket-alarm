@@ -132,22 +132,18 @@ def search_flights_simple(amadeus: Client):
             "travelClass": "ECONOMY",
             "currencyCode": "TWD",
             "max": 10,
-            "nonStop": True,
+            "nonStop": "true",
         }
 
-        logger.info(f"Searching flights with params: {search_params}")
         response = amadeus.shopping.flight_offers_search.get(**search_params)
 
         if not response.data:
-            logger.warning("No flight offers found")
             return []
 
-        logger.info(f"Found {len(response.data)} flight offers")
         return response.data
 
     except ResponseError as error:
-        logger.error(f"Amadeus API error: {error.code} - {error.description}")
-        raise ValueError(f"航班搜尋錯誤: {error.description}")
+        error_msg = error.response.body if hasattr(error, "response") else str(error)
+        raise ValueError(f"航班搜尋錯誤: {error_msg}")
     except Exception as e:
-        logger.error(f"Unexpected error in flight search: {str(e)}")
-        raise ValueError(f"航班搜尋時發生未預期的錯誤:{str(e)}")
+        raise ValueError(f"航班搜尋時發生未預期的錯誤: {str(e)}")

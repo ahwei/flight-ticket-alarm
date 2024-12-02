@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 from amadeus import Client, ResponseError
 import os
-from api.util.search import search_flights
+from api.util.search import search_flights, search_flights_simple
 
 
 class FlightData:
@@ -33,8 +33,11 @@ amadeus = Client(
 
 @flight_route.route("/")
 def hello_world():
+    offers = search_flights_simple(amadeus)
+
     return jsonify(
         {
+            "data": offers,
             "search_criteria": {
                 "flight_data": [
                     {
@@ -51,7 +54,7 @@ def hello_world():
                     "infants_in_seat": "佔位嬰兒人數",
                     "infants_on_lap": "抱嬰兒人數",
                 },
-            }
+            },
         }
     )
 
