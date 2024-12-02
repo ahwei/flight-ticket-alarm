@@ -9,7 +9,7 @@ from linebot.models import (
     ButtonComponent,
     SeparatorComponent,
 )
-from .airline import format_datetime
+from .airline import format_datetime, get_airline_info
 
 
 def create_flight_flex_message(offers):
@@ -17,49 +17,67 @@ def create_flight_flex_message(offers):
     for offer in offers[:10]:  # 限制最多顯示10筆
         segments_contents = []
 
-        # 處理每個航段
-        for segment in offer.get("itineraries", [{}])[0].get("segments", []):
-            # 使用新的安全取得航空公司和機型資訊的函數
-            airline_name, aircraft_type, flight_number = get_airline_info(segment)
-
+        # 遍歷所有行程（去程和回程）
+        for itinerary_index, itinerary in enumerate(offer.get("itineraries", [])):
+            # 加入行程標題（去程/回程）
             segments_contents.extend(
                 [
                     TextComponent(
-                        text=f"✈️ {airline_name} {segment.get('number', 'N/A')}",
+                        text=f"{'去程' if itinerary_index == 0 else '回程'}",
                         size="md",
                         weight="bold",
+                        color="#1DB446",
                     ),
-                    TextComponent(
-                        text=f"機型: {aircraft_type}",
-                        size="xs",
-                        color="#888888",
-                        margin="sm",
-                    ),
-                    BoxComponent(
-                        layout="vertical",
-                        margin="sm",
-                        spacing="sm",
-                        contents=[
-                            TextComponent(
-                                text=f"從 {segment['departure']['iataCode']} "
-                                f"{format_datetime(segment['departure']['at'])}",
-                                size="sm",
-                            ),
-                            TextComponent(
-                                text=f"到 {segment['arrival']['iataCode']} "
-                                f"{format_datetime(segment['arrival']['at'])}",
-                                size="sm",
-                            ),
-                            TextComponent(
-                                text=f"飛行時間: {segment['duration'].replace('PT', '').replace('H', '小時').replace('M', '分鐘')}",
-                                size="xs",
-                                color="#888888",
-                            ),
-                        ],
-                    ),
-                    SeparatorComponent(margin="md"),
+                    SeparatorComponent(margin="sm"),
                 ]
             )
+
+            # 處理該行程的所有航段
+            for segment in itinerary.get("segments", []):
+                airline_name, aircraft_type, flight_number = get_airline_info(segment)
+
+                segments_contents.extend(
+                    [
+                        TextComponent(
+                            text=f"✈️ {airline_name} {segment.get('number', 'N/A')}",
+                            size="md",
+                            weight="bold",
+                        ),
+                        TextComponent(
+                            text=f"機型: {aircraft_type}",
+                            size="xs",
+                            color="#888888",
+                            margin="sm",
+                        ),
+                        BoxComponent(
+                            layout="vertical",
+                            margin="sm",
+                            spacing="sm",
+                            contents=[
+                                TextComponent(
+                                    text=f"從 {segment['departure']['iataCode']} "
+                                    f"{format_datetime(segment['departure']['at'])}",
+                                    size="sm",
+                                ),
+                                TextComponent(
+                                    text=f"到 {segment['arrival']['iataCode']} "
+                                    f"{format_datetime(segment['arrival']['at'])}",
+                                    size="sm",
+                                ),
+                                TextComponent(
+                                    text=f"飛行時間: {segment['duration'].replace('PT', '').replace('H', '小時').replace('M', '分鐘')}",
+                                    size="xs",
+                                    color="#888888",
+                                ),
+                            ],
+                        ),
+                        SeparatorComponent(margin="md"),
+                    ]
+                )
+
+            # 在去程和回程之間加入分隔
+            if itinerary_index < len(offer.get("itineraries", [])) - 1:
+                segments_contents.append(SeparatorComponent(margin="xl"))
 
         cabin = offer["travelerPricings"][0]["fareDetailsBySegment"][0][
             "cabin"
