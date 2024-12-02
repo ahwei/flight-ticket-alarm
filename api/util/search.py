@@ -90,7 +90,7 @@ def search_flights(data, amadeus: Client):
         "adults": adults,
         "travelClass": travel_class,
         "currencyCode": "TWD",
-        # "nonStop": "true",
+        "nonStop": str(data.get("nonStop", "true")).lower(),  # 修改 nonStop 參數
     }
 
     if returnDate:

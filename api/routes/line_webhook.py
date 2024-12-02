@@ -53,6 +53,7 @@ class SearchState:
                 "infants_on_lap": 0,
             },
             "seat": "economy",
+            "nonStop": None,  # 新增 nonStop 參數
         }
 
 
@@ -123,6 +124,24 @@ def handle_message(event):
                 state.data["trip"] = (
                     "one-way" if message_text == "單程" else "round-trip"
                 )
+                state.step = "nonstop"  # 改變下一步為詢問是否直飛
+                quick_reply = QuickReply(
+                    items=[
+                        QuickReplyButton(action=MessageAction(label="是", text="是")),
+                        QuickReplyButton(action=MessageAction(label="否", text="否")),
+                    ]
+                )
+                line_bot_api.reply_message(
+                    event.reply_token,
+                    TextSendMessage(
+                        text="是否只搜尋直飛航班？", quick_reply=quick_reply
+                    ),
+                )
+            return
+
+        if state.step == "nonstop":  # 新增處理是否直飛的步驟
+            if message_text in ["是", "否"]:
+                state.data["nonStop"] = "true" if message_text == "是" else "false"
                 state.step = "departure_date"
                 line_bot_api.reply_message(
                     event.reply_token,
