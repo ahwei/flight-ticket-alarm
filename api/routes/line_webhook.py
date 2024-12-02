@@ -5,42 +5,13 @@ from linebot.models import (
     MessageEvent,
     TextMessage,
     TextSendMessage,
-    FlexSendMessage,
-    BubbleContainer,
-    BoxComponent,
-    TextComponent,
-    ButtonComponent,
-    SeparatorComponent,
 )
 import os
 import logging
 from api.util.search import search_flights_simple
+from api.util.line import create_flight_flex_message
 from amadeus import Client
 
-# 新增航空公司對照表
-AIRLINE_CODES = {
-    "TW": "台灣虎航",
-    "BR": "長榮航空",
-    "CI": "中華航空",
-    "JL": "日本航空",
-    "NH": "全日空航空",
-    "MM": "樂桃航空",
-    "VJ": "越捷航空",
-    "JX": "星宇航空",
-    "AK": "亞洲航空",
-}
-
-# 新增機型對照表
-AIRCRAFT_CODES = {
-    "738": "波音 737-800",
-    "333": "空巴 A330-300",
-    "359": "空巴 A350-900",
-    "32N": "空巴 A320neo",
-    "321": "空巴 A321",
-    "320": "空巴 A320",
-    "789": "波音 787-9",
-    "788": "波音 787-8",
-}
 
 # 設定日誌
 logging.basicConfig(level=logging.INFO)
@@ -85,141 +56,6 @@ def line_webhook():
         return jsonify({"error": "Internal server error"}), 500
 
     return "OK"
-
-
-def format_datetime(datetime_str):
-    """格式化日期時間字串"""
-    from datetime import datetime
-
-    dt = datetime.fromisoformat(datetime_str.replace("Z", "+00:00"))
-    return dt.strftime("%Y-%m-%d %H:%M")
-
-
-def get_airline_info(segment):
-    """安全地取得航空公司和機型資訊"""
-    try:
-        carrier_code = segment.get("carrierCode", "")
-        aircraft_info = segment.get("aircraft", {})
-        aircraft_code = (
-            aircraft_info.get("code", "") if isinstance(aircraft_info, dict) else ""
-        )
-
-        # 確保代碼不為空
-        if not carrier_code:
-            carrier_code = "未知航空"
-        if not aircraft_code:
-            aircraft_code = "未知機型"
-
-        airline_name = AIRLINE_CODES.get(carrier_code, f"其他航空({carrier_code})")
-        aircraft_type = AIRCRAFT_CODES.get(aircraft_code, f"其他機型({aircraft_code})")
-
-        return airline_name, aircraft_type, carrier_code
-    except Exception as e:
-        logger.error(f"Error processing airline info: {str(e)}")
-        return "未知航空", "未知機型", "N/A"
-
-
-def create_flight_flex_message(offers):
-    bubbles = []
-    for offer in offers[:10]:  # 限制最多顯示10筆
-        segments_contents = []
-
-        # 處理每個航段
-        for segment in offer.get("itineraries", [{}])[0].get("segments", []):
-            # 使用新的安全取得航空公司和機型資訊的函數
-            airline_name, aircraft_type, flight_number = get_airline_info(segment)
-
-            segments_contents.extend(
-                [
-                    TextComponent(
-                        text=f"✈️ {airline_name} {segment.get('number', 'N/A')}",
-                        size="md",
-                        weight="bold",
-                    ),
-                    TextComponent(
-                        text=f"機型: {aircraft_type}",
-                        size="xs",
-                        color="#888888",
-                        margin="sm",
-                    ),
-                    BoxComponent(
-                        layout="vertical",
-                        margin="sm",
-                        spacing="sm",
-                        contents=[
-                            TextComponent(
-                                text=f"從 {segment['departure']['iataCode']} "
-                                f"{format_datetime(segment['departure']['at'])}",
-                                size="sm",
-                            ),
-                            TextComponent(
-                                text=f"到 {segment['arrival']['iataCode']} "
-                                f"{format_datetime(segment['arrival']['at'])}",
-                                size="sm",
-                            ),
-                            TextComponent(
-                                text=f"飛行時間: {segment['duration'].replace('PT', '').replace('H', '小時').replace('M', '分鐘')}",
-                                size="xs",
-                                color="#888888",
-                            ),
-                        ],
-                    ),
-                    SeparatorComponent(margin="md"),
-                ]
-            )
-
-        cabin = offer["travelerPricings"][0]["fareDetailsBySegment"][0][
-            "cabin"
-        ].capitalize()
-        airline_code = offer["validatingAirlineCodes"][0]
-        airline_name = AIRLINE_CODES.get(airline_code, airline_code)
-
-        bubble = BubbleContainer(
-            body=BoxComponent(
-                layout="vertical",
-                contents=[
-                    TextComponent(
-                        text=f"{airline_name}", weight="bold", size="xl", margin="md"
-                    ),
-                    # ...rest of the bubble content remains the same...
-                    TextComponent(
-                        text=f"{cabin}艙 ({offer['numberOfBookableSeats']}座位)",
-                        size="sm",
-                        color="#888888",
-                        margin="sm",
-                    ),
-                    SeparatorComponent(margin="md"),
-                    BoxComponent(
-                        layout="vertical",
-                        margin="md",
-                        spacing="sm",
-                        contents=segments_contents,
-                    ),
-                    BoxComponent(
-                        layout="vertical",
-                        margin="md",
-                        contents=[
-                            TextComponent(
-                                text=f"總價: TWD {float(offer['price']['grandTotal']):,.0f}",
-                                size="lg",
-                                weight="bold",
-                                color="#1DB446",
-                            ),
-                            TextComponent(text="*含稅價", size="xs", color="#888888"),
-                        ],
-                    ),
-                ],
-            )
-        )
-        bubbles.append(bubble)
-
-    return FlexSendMessage(
-        alt_text="航班資訊",
-        contents={
-            "type": "carousel",
-            "contents": [bubble.as_json_dict() for bubble in bubbles],
-        },
-    )
 
 
 @handler.add(MessageEvent, message=TextMessage)
