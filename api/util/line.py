@@ -5,7 +5,7 @@ from linebot.models import (
     TextComponent,
     SeparatorComponent,
 )
-from .airline import format_datetime
+from .airline import format_datetime, get_airline_info, AIRLINE_CODES
 
 
 def create_flight_flex_message(offers):
