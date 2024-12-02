@@ -90,6 +90,7 @@ def search_flights(data, amadeus: Client):
         "adults": adults,
         "travelClass": travel_class,
         "currencyCode": "TWD",
+        "nonStop": "true",
     }
 
     if returnDate:
