@@ -1,10 +1,10 @@
-from flask import Flask, send_file, jsonify
+from flask import Flask, send_file, jsonify, request, abort
 from flask_swagger_ui import get_swaggerui_blueprint
 from api import api_blueprint
 from dotenv import load_dotenv
+import os
 
 load_dotenv()
-
 
 app = Flask(__name__)
 
@@ -25,12 +25,20 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 )
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
+
 # 靜態檔案路由
-
-
 @app.route("/static/swagger.yml")
 def send_swagger_yml():
     return send_file("swagger.yml")
+
+
+# Cron job 路由
+@app.route("/cron-job")
+def cron_job():
+    if request.remote_addr not in ["127.0.0.1", "localhost"]:
+        abort(403)
+
+    return jsonify(message="Cron job executed")
 
 
 if __name__ == "__main__":

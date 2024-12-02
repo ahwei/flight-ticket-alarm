@@ -11,5 +11,11 @@
       "src": "/(.*)",
       "dest": "app.py"
     }
+  ],
+  "crons": [
+    {
+      "path": "/cron-job",
+      "schedule": "0 * * * *"
+    }
   ]
 }
