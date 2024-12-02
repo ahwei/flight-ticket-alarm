@@ -13,25 +13,17 @@ def create_flight_flex_message(offers):
     for offer in offers[:10]:  # 限制最多顯示10筆
         segments_contents = []
 
-        # 取得日期範圍
-        departure_date = offer.get("lastTicketingDate", "N/A")
-        return_date = (
-            offer.get("lastTicketingDateTime", "N/A").split("T")[0]
-            if "lastTicketingDateTime" in offer
-            else "N/A"
-        )
-        date_range = f"{departure_date}~{return_date}"
-
         # 處理每個航段
         for itinerary in offer.get("itineraries", []):
             for segment in itinerary.get("segments", []):
                 # 使用新的安全取得航空公司和機型資訊的函數
                 airline_name, aircraft_type, flight_number = get_airline_info(segment)
 
+                carrier_code = segment.get("carrierCode", "")
                 segments_contents.extend(
                     [
                         TextComponent(
-                            text=f"✈️ {airline_name} {segment.get('number', 'N/A')}",
+                            text=f"✈️ {airline_name}-{carrier_code}{segment.get('number', 'N/A')}",
                             size="md",
                             weight="bold",
                         ),
@@ -81,13 +73,7 @@ def create_flight_flex_message(offers):
                         text=f"{airline_name}", weight="bold", size="xl", margin="md"
                     ),
                     TextComponent(
-                        text=date_range,
-                        size="md",
-                        color="#888888",
-                        margin="sm",
-                    ),
-                    TextComponent(
-                        text=f"{cabin}艙 ({offer['numberOfBookableSeats']}座位)",
+                        text=f"{cabin}艙 ",
                         size="sm",
                         color="#888888",
                         margin="sm",
