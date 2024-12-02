@@ -69,16 +69,16 @@ def create_flight_flex_message(offers):
             body=BoxComponent(
                 layout="vertical",
                 contents=[
-                    TextComponent(
-                        text=f"{airline_name}", weight="bold", size="xl", margin="md"
-                    ),
-                    TextComponent(
-                        text=f"{cabin}艙 ",
-                        size="sm",
-                        color="#888888",
-                        margin="sm",
-                    ),
-                    SeparatorComponent(margin="md"),
+                    # TextComponent(
+                    #     text=f"{airline_name}", weight="bold", size="xl", margin="md"
+                    # ),
+                    # TextComponent(
+                    #     text=f"{cabin}艙 ",
+                    #     size="sm",
+                    #     color="#888888",
+                    #     margin="sm",
+                    # ),
+                    # SeparatorComponent(margin="md"),
                     BoxComponent(
                         layout="vertical",
                         margin="md",
